@@ -20,13 +20,14 @@ import math
 import matplotlib.pyplot as plt 
 import scipy
 import time
+import pickle
 
 import dataloader as dl
 import models as md
 
 from torch.utils.tensorboard import SummaryWriter
 
-# writer = SummaryWriter('runs/RelationNet_exp1')
+writer = SummaryWriter('runs/RelationNet_exp1')
 
 
 
@@ -70,8 +71,6 @@ def training(data_loader, n_epoch):
     EmbeddingNetwork.train()
     RelationNetwork.train()
 
-    running_loss = 0
-
     for en, (sx, qx, sy, qy) in enumerate(data_loader):
 
         ## Remove additional dimension
@@ -99,7 +98,13 @@ def training(data_loader, n_epoch):
         loss.backward()
         optimizer.step()
 
+        running_loss = 0
         running_loss+=loss.cpu().item()
+
+
+        writer.add_scalar('Training Loss (MSE)',
+                        running_loss / len(TrainDataLoader),
+                        (n_epochs-1)*(en+1))
 
 
         print ("[Epoch: %d] [Iter: %d/%d] [loss: %f]" % (n_epoch, en, len(TrainDataLoader), loss.cpu().data.numpy()))
@@ -151,8 +156,16 @@ if isTrain:
     for  i in range(epochs):
         training(TrainDataLoader, i+1)
 
-        val_acc = validation(ValDataLoader i+1)
+        val_acc = validation(ValDataLoader, i+1)
+
+        writer.add_scalar('Validation Accuracy',
+                        running_loss / len(ValDataLoader),
+                        (n_epochs-1)*(en+1))
 
         if (i+1)%save_epoch==0:
             torch.save(EmbeddingNetwork, join(checkpoints_path, "emb_net.pth"))
             torch.save(RelationNetwork, join(checkpoints_path, "relation_net.pth"))
+    
+    pickle.dump(tr, join(checkpoints_path, "traning_class.pkl"))
+    pickle.dump(val, join(checkpoints_path, "validation_class.pkl"))
+    pickle.dump(te, join(checkpoints_path, "testing_class.pkl"))
