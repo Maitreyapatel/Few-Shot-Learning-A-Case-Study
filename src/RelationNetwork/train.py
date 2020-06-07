@@ -1,5 +1,7 @@
 import numpy as np
 import sys
+from os import listdir, makedirs, getcwd, remove
+from os.path import isfile, join, abspath, exists, isdir, expanduser
 from PIL import Image
 
 import torch
@@ -159,8 +161,8 @@ if isTrain:
         val_acc = validation(ValDataLoader, i+1)
 
         writer.add_scalar('Validation Accuracy',
-                        running_loss / len(ValDataLoader),
-                        (n_epochs-1)*(en+1))
+                        val_acc / len(ValDataLoader),
+                        (i+1))
 
         if (i+1)%save_epoch==0:
             torch.save(EmbeddingNetwork, join(checkpoints_path, "emb_net.pth"))
