@@ -23,52 +23,28 @@ import matplotlib.pyplot as plt
 import scipy
 import time
 import pickle
+import argparse
 
 import dataloader as dl
 import models as md
 
 from torch.utils.tensorboard import SummaryWriter
 
-writer = SummaryWriter('runs/RelationNet_exp1')
+
+parser = argparse.ArgumentParser(description="Learning to learn: RelationNetwork Parameters")
+parser.add_argument("-n","--n_way",type = int, default = 5)
+parser.add_argument("-k","--k_shot",type = int, default = 5)
+parser.add_argument("-lr","--learning_rate",type = float, default = 0.000001)
+parser.add_argument("-save","--saving_rate",type = int, default = 5)
+parser.add_argument("-ckp","--checkpoint_path",type = str)
+parser.add_argument("-ep","--epochs",type = int, default = 150)
+parser.add_argument("-train","--do_training",type = bool, default = True)
+parser.add_argument("-test","--test_class_path",type = str, default = "")
+
+args = parser.parse_args()
 
 
-
-if torch.cuda.is_available():
-    device = "cuda"
-else:
-    device = "cpu"
-
-
-## Few Config
-k_shot = 5
-n_way = 5
-learning_rate = 0.000001
-
-
-#### Define networks
-EmbeddingNetwork = md.RegularEncoder().to(device)
-RelationNetwork = md.RelationNet().to(device)
-
-#### Get training, validation, and testing classes
-tr, val, te = dl.get_labels("./data/102flowers/imagelabels.mat")
-
-#### Define dataloaders
-TrainData = dl.Few_shot_dataset("./data/102flowers/jpg/", "./data/102flowers/imagelabels.mat", n_way, k_shot, tr)
-ValData = dl.Few_shot_dataset("./data/102flowers/jpg/", "./data/102flowers/imagelabels.mat", n_way, k_shot, val)
-TestData = dl.Few_shot_dataset("./data/102flowers/jpg/", "./data/102flowers/imagelabels.mat", n_way, k_shot, te)
-
-TrainDataLoader = DataLoader(TrainData, batch_size=1, shuffle=True, num_workers=0)  # num_workers=0 for windows OS
-ValDataLoader = DataLoader(TrainData, batch_size=1, shuffle=True, num_workers=0)  # num_workers=0 for windows OS
-TestDataLoader = DataLoader(TrainData, batch_size=1, shuffle=True, num_workers=0)  # num_workers=0 for windows OS
-
-
-#### Define Loss function
-criterion = nn.MSELoss()
-
-#### Define optimizers
-optimizer = torch.optim.Adam(itertools.chain(EmbeddingNetwork.parameters(), RelationNetwork.parameters()), lr=learning_rate, betas=(0.5, 0.999))
-
-
+### Training functions
 def training(data_loader, n_epoch):
     EmbeddingNetwork.train()
     RelationNetwork.train()
@@ -111,6 +87,8 @@ def training(data_loader, n_epoch):
 
         print ("[Epoch: %d] [Iter: %d/%d] [loss: %f]" % (n_epoch, en, len(TrainDataLoader), loss.cpu().data.numpy()))
 
+
+### Validation Function
 def validation(data_loader, n_epoch):
     EmbeddingNetwork.eval()
     RelationNetwork.eval()
@@ -148,13 +126,62 @@ def validation(data_loader, n_epoch):
     return (correct*100)/total
 
 
-isTrain = True
-save_epoch = 1
-checkpoints_path = "./src/RelationNetwork/checkpoints"
+
+
+
+## Few Config
+checkpoints_path = args.checkpoint_path
+isTrain = args.do_training
+save_epoch = args.saving_rate
+k_shot = args.k_shot
+n_way = args.n_way
+learning_rate = args.learning_rate
+epochs = args.epochs
+
+if isdir(checkpoints_path)==False:
+    makedirs(checkpoints_path)
+
+
+writer = SummaryWriter('runs/RelationNet_{}_way_{}_shot'.format(n_way, k_shot))
+
+if torch.cuda.is_available():
+    device = "cuda"
+else:
+    device = "cpu"
+
+#### Define networks
+EmbeddingNetwork = md.RegularEncoder().to(device)
+RelationNetwork = md.RelationNet().to(device)
+
+#### Get training, validation, and testing classes
+tr, val, te = dl.get_labels("./data/102flowers/imagelabels.mat")
+with open(join(checkpoints_path, 'traning_class.pkl'), 'wb') as f1:
+    pickle.dump(tr, f1)
+with open(join(checkpoints_path, 'traning_class.pkl'), 'wb') as f2:
+    pickle.dump(val, f2)
+with open(join(checkpoints_path, 'traning_class.pkl'), 'wb') as f3:
+    pickle.dump(te, f3)
+
+#### Define dataloaders
+TrainData = dl.Few_shot_dataset("./data/102flowers/jpg/", "./data/102flowers/imagelabels.mat", n_way, k_shot, tr)
+ValData = dl.Few_shot_dataset("./data/102flowers/jpg/", "./data/102flowers/imagelabels.mat", n_way, k_shot, val)
+TestData = dl.Few_shot_dataset("./data/102flowers/jpg/", "./data/102flowers/imagelabels.mat", n_way, k_shot, te)
+
+TrainDataLoader = DataLoader(TrainData, batch_size=1, shuffle=True, num_workers=0)  # num_workers=0 for windows OS
+ValDataLoader = DataLoader(ValData, batch_size=1, shuffle=True, num_workers=0)  # num_workers=0 for windows OS
+TestDataLoader = DataLoader(TestData, batch_size=1, shuffle=True, num_workers=0)  # num_workers=0 for windows OS
+
+
+#### Define Loss function
+criterion = nn.MSELoss()
+
+#### Define optimizers
+optimizer = torch.optim.Adam(itertools.chain(EmbeddingNetwork.parameters(), RelationNetwork.parameters()), lr=learning_rate, betas=(0.5, 0.999))
+
+
 
 
 if isTrain:
-    epochs = 100
     for  i in range(epochs):
         training(TrainDataLoader, i+1)
 
@@ -167,10 +194,4 @@ if isTrain:
         if (i+1)%save_epoch==0:
             torch.save(EmbeddingNetwork, join(checkpoints_path, "emb_net_{}.pth".format(i+1)))
             torch.save(RelationNetwork, join(checkpoints_path, "relation_net_{}.pth".format(i+1)))
-    
-    with open(join(checkpoints_path, 'traning_class.pkl'), 'w') as f1:
-        pickle.dump(tr, f1)
-    with open(join(checkpoints_path, 'traning_class.pkl'), 'w') as f2:
-        pickle.dump(val, f2)
-    with open(join(checkpoints_path, 'traning_class.pkl'), 'w') as f3:
-        pickle.dump(te, f3)
+        
