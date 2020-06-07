@@ -1,2 +1,3 @@
 data/*
 src/RelationNetwork/__py*
+src/RelationNetwork/checkpoints/*

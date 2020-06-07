@@ -104,7 +104,55 @@ def training(data_loader, n_epoch):
 
         print ("[Epoch: %d] [Iter: %d/%d] [loss: %f]" % (n_epoch, en, len(TrainDataLoader), loss.cpu().data.numpy()))
 
+def validation(data_loader, n_epoch):
+    EmbeddingNetwork.eval()
+    RelationNetwork.eval()
 
-epochs = 100
-for  i in range(epochs):
-    training(TrainDataLoader, i+1)
+    current = 0
+    total = 0
+
+    for en, (sx, qx, sy, qy) in enumerate(data_loader):
+
+        ## Remove additional dimension
+        ## (k_shot*n_way)*3*128*128
+        sx = Variable(sx.squeeze(0)).to(device)
+        sy = Variable(sy.squeeze(0)).to(device)
+        qx = Variable(qx.squeeze(0)).to(device)
+        qy = Variable(qy.squeeze(0)).to(device)
+
+        ## extract embeddings
+        sx_f = EmbeddingNetwork(sx)
+        qx_f = EmbeddingNetwork(qx)
+
+        ## Concatenating support and quey set
+        sx_f = torch.sum(sx_f.view(n_way, k_shot, 64, sx_f.shape[-2], sx_f.shape[-1]), 1).squeeze(1).unsqueeze(0).repeat(qx.shape[0], 1, 1, 1, 1)
+        qx_f = qx_f.unsqueeze(1).repeat(1, n_way, 1, 1, 1)
+        pairs = torch.cat((sx_f, qx_f), 2).view(-1, 64*2, sx_f.shape[-2], sx_f.shape[-1])
+
+        ## Get relation scores
+        scores = RelationNetwork(pairs).view(qx.shape[0], n_way, 1).squeeze(2)
+
+        _, true_labels = torch.max(qy.data, 1)
+        _, pred_labels = torch.max(scores.data,1)
+
+        correct += np.sum([1 if pred_labels[j]==true_labels[j] else 0 for j in range(qy.shape[0])])
+        total += qy.shape[0]
+
+    return (correct*100)/total
+
+
+isTrain = True
+save_epoch = 5
+checkpoints_path = "./src/ReletionNetwork/checkpoints"
+
+
+if isTrain:
+    epochs = 100
+    for  i in range(epochs):
+        training(TrainDataLoader, i+1)
+
+        val_acc = validation(ValDataLoader i+1)
+
+        if (i+1)%save_epoch==0:
+            torch.save(EmbeddingNetwork, join(checkpoints_path, "emb_net.pth"))
+            torch.save(RelationNetwork, join(checkpoints_path, "relation_net.pth"))
