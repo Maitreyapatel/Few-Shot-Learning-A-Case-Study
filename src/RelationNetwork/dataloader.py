@@ -60,13 +60,17 @@ class Few_shot_dataset(Dataset):
             sup_tmp_y = []
             q_tmp_y = []
 
-            for j in cls:
+            for k,j in enumerate(cls):
                 imgs = np.random.choice(len(self.label2img[j]), 2*k_shot, False)
                 sup_tmp_x.append(np.array(self.label2img[j])[np.array(imgs[:k_shot])].tolist())
                 q_tmp_x.append(np.array(self.label2img[j])[np.array(imgs[k_shot:])].tolist())
 
-                sup_tmp_y.append(np.ones(k_shot)*j)
-                q_tmp_y.append(np.ones(k_shot)*j)
+                ch = torch.zeros(n_way)
+                ch[k] = 1
+                ch = ch.unsqueeze(0).repeat(k_shot, 1)
+
+                sup_tmp_y.append(ch.numpy())
+                q_tmp_y.append(ch.numpy())
             
             self.support_set_x.append(sup_tmp_x)
             self.query_set_x.append(q_tmp_x)
