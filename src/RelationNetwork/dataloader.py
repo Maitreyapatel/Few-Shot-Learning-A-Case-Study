@@ -52,7 +52,7 @@ class Few_shot_dataset(Dataset):
         self.support_set_y = []
         self.query_set_y = []
 
-        for i in range(500):
+        for i in range(100):
             cls = np.random.choice(target_class, n_way, False)
             sup_tmp_x = []
             q_tmp_x = []
@@ -110,4 +110,4 @@ class Few_shot_dataset(Dataset):
 
 
     def __len__(self):
-        return 500
+        return 100

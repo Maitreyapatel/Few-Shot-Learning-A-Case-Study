@@ -40,9 +40,9 @@ else:
 
 
 ## Few Config
-k_shot = 20
+k_shot = 5
 n_way = 5
-learning_rate = 0.0001
+learning_rate = 0.000001
 
 
 #### Define networks
@@ -105,8 +105,8 @@ def training(data_loader, n_epoch):
 
 
         writer.add_scalar('Training Loss (MSE)',
-                        running_loss / len(TrainDataLoader),
-                        (n_epochs-1)*(en+1))
+                        running_loss,
+                        (n_epoch-1)*len(TrainDataLoader) + (en+1))
 
 
         print ("[Epoch: %d] [Iter: %d/%d] [loss: %f]" % (n_epoch, en, len(TrainDataLoader), loss.cpu().data.numpy()))
@@ -115,7 +115,7 @@ def validation(data_loader, n_epoch):
     EmbeddingNetwork.eval()
     RelationNetwork.eval()
 
-    current = 0
+    correct = 0
     total = 0
 
     for en, (sx, qx, sy, qy) in enumerate(data_loader):
@@ -149,8 +149,8 @@ def validation(data_loader, n_epoch):
 
 
 isTrain = True
-save_epoch = 5
-checkpoints_path = "./src/ReletionNetwork/checkpoints"
+save_epoch = 1
+checkpoints_path = "./src/RelationNetwork/checkpoints"
 
 
 if isTrain:
@@ -161,13 +161,16 @@ if isTrain:
         val_acc = validation(ValDataLoader, i+1)
 
         writer.add_scalar('Validation Accuracy',
-                        val_acc / len(ValDataLoader),
+                        val_acc,
                         (i+1))
 
         if (i+1)%save_epoch==0:
-            torch.save(EmbeddingNetwork, join(checkpoints_path, "emb_net.pth"))
-            torch.save(RelationNetwork, join(checkpoints_path, "relation_net.pth"))
+            torch.save(EmbeddingNetwork, join(checkpoints_path, "emb_net_{}.pth".format(i+1)))
+            torch.save(RelationNetwork, join(checkpoints_path, "relation_net_{}.pth".format(i+1)))
     
-    pickle.dump(tr, join(checkpoints_path, "traning_class.pkl"))
-    pickle.dump(val, join(checkpoints_path, "validation_class.pkl"))
-    pickle.dump(te, join(checkpoints_path, "testing_class.pkl"))
+    with open(join(checkpoints_path, 'traning_class.pkl'), 'w') as f1:
+        pickle.dump(tr, f1)
+    with open(join(checkpoints_path, 'traning_class.pkl'), 'w') as f2:
+        pickle.dump(val, f2)
+    with open(join(checkpoints_path, 'traning_class.pkl'), 'w') as f3:
+        pickle.dump(te, f3)
