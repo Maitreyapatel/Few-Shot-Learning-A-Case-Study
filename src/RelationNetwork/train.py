@@ -85,7 +85,7 @@ def training(data_loader, n_epoch):
                         (n_epoch-1)*len(TrainDataLoader) + (en+1))
 
 
-        print ("[Epoch: %d] [Iter: %d/%d] [loss: %f]" % (n_epoch, en, len(TrainDataLoader), loss.cpu().data.numpy()))
+        # print ("[Epoch: %d] [Iter: %d/%d] [loss: %f]" % (n_epoch, en, len(TrainDataLoader), loss.cpu().data.numpy()))
 
 
 ### Validation Function
@@ -157,9 +157,9 @@ RelationNetwork = md.RelationNet().to(device)
 tr, val, te = dl.get_labels("./data/102flowers/imagelabels.mat")
 with open(join(checkpoints_path, 'traning_class.pkl'), 'wb') as f1:
     pickle.dump(tr, f1)
-with open(join(checkpoints_path, 'traning_class.pkl'), 'wb') as f2:
+with open(join(checkpoints_path, 'validation_class.pkl'), 'wb') as f2:
     pickle.dump(val, f2)
-with open(join(checkpoints_path, 'traning_class.pkl'), 'wb') as f3:
+with open(join(checkpoints_path, 'validation_class.pkl'), 'wb') as f3:
     pickle.dump(te, f3)
 
 #### Define dataloaders

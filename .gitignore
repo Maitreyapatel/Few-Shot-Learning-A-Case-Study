@@ -1,3 +1,5 @@
 data/*
 src/RelationNetwork/__py*
 src/RelationNetwork/checkpoints/*
+.ipy*
+training_script.ipynb
