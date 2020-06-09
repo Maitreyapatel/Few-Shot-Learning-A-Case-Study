@@ -68,4 +68,16 @@ class RelationNet(nn.Module):
 
         return h
 
-            
+class TextRelationNetwork(nn.Module):
+    def __init__(self):
+        super(TextRelationNetwork, self).__init__()
+
+        self.fc1 = nn.Linear(768*2, 768)
+        self.fc2 = nn.Linear(768, 128)
+        self.fc3 = nn.Linear(128, 1)
+
+    def forward(self, x):
+        h = F.relu(self.fc1(x))
+        h = F.relu(self.fc2(h))
+        h = torch.sigmoid(self.fc3(h))
+        return h
