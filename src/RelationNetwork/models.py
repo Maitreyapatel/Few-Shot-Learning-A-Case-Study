@@ -72,7 +72,7 @@ class TextRelationNetwork(nn.Module):
     def __init__(self):
         super(TextRelationNetwork, self).__init__()
 
-        self.fc1 = nn.Linear(768*2, 768)
+        self.fc1 = nn.Linear(768*2*2, 768)
         self.fc2 = nn.Linear(768, 128)
         self.fc3 = nn.Linear(128, 1)
 
