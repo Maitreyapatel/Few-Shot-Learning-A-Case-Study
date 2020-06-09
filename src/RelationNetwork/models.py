@@ -4,6 +4,8 @@ import torch.nn as nn
 import torch.autograd as autograd
 import torch.nn.functional as F
 
+import transformers
+
 class RegularEncoder(nn.Module):
     def __init__(self, n_layer=4, batch_norm = [1, 1, 1, 1], mp = [1, 1, 0, 0]):
         super(RegularEncoder, self).__init__()
@@ -22,6 +24,22 @@ class RegularEncoder(nn.Module):
 
     def forward(self, x):
         return self.layers(x)
+
+class TextEncoder(nn.Module):
+    def __init__(self, bert_path):
+        super(TextEncoder, self).__init__()
+        self.bert_path = bert_path
+        self.bert = transformers.BertModel.from_pretrained('bert-base-uncased')
+
+    def forward(self, ids, mask,  token_type_ids):
+        o1, o2 = self.bert(ids, attention_mask=mask, token_type_ids=token_type_ids)
+        
+        apool = torch.mean(o1, 1)
+        mpool, _ = torch.max(o1, 1)
+        cat = torch.cat((apool, mpool), 1)
+
+        return cat
+
 
 class RelationNet(nn.Module):
     def __init__(self, cnn_layers=2, batch_norm = [1, 1], mp=[1,1], hidden_dim = 512):
