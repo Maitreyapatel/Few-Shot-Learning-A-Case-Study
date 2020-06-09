@@ -74,7 +74,7 @@ def training(data_loader, n_epoch):
         _, sy_label = torch.max(qy.data, 1)
 
         optimizer.zero_grad()
-        loss = criterion(scores, qy) + triplet(sx_f, sy_label)*0.001
+        loss = criterion(scores, qy)# + triplet(sx_f, sy_label)*0.01
         loss.backward()
         optimizer.step()
 
@@ -144,7 +144,7 @@ if isdir(checkpoints_path)==False:
     makedirs(checkpoints_path)
 
 
-writer = SummaryWriter('runs/RelationNet_{}_way_{}_shot_metric_learning'.format(n_way, k_shot))
+writer = SummaryWriter('runs/RelationNet_{}_way_{}_shot'.format(n_way, k_shot))
 
 if torch.cuda.is_available():
     device = "cuda"
@@ -176,7 +176,7 @@ TestDataLoader = DataLoader(TestData, batch_size=1, shuffle=True, num_workers=0)
 
 #### Define Loss function
 criterion = nn.MSELoss()
-triplet = losses.TripletMarginLoss(margin=0.1)
+triplet = losses.TripletMarginLoss(margin=0.01)
 
 #### Define optimizers
 optimizer = torch.optim.Adam(itertools.chain(EmbeddingNetwork.parameters(), RelationNetwork.parameters()), lr=learning_rate, betas=(0.5, 0.999))
