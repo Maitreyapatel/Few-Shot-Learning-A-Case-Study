@@ -177,7 +177,7 @@ with open(join(checkpoints_path, 'traning_class.pkl'), 'wb') as f1:
     pickle.dump(tr, f1)
 with open(join(checkpoints_path, 'validation_class.pkl'), 'wb') as f2:
     pickle.dump(val, f2)
-with open(join(checkpoints_path, 'validation_class.pkl'), 'wb') as f3:
+with open(join(checkpoints_path, 'testing_class.pkl'), 'wb') as f3:
     pickle.dump(te, f3)
 
 #### Define dataloaders
