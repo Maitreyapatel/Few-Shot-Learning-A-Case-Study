@@ -160,7 +160,7 @@ if isdir(checkpoints_path)==False:
     makedirs(checkpoints_path)
 
 
-writer = SummaryWriter('runs/TEXT_RelationNet_{}_way_{}_shot'.format(n_way, k_shot))
+writer = SummaryWriter('runs/TEXT_RelationNet_{}_way_{}_shot_exp3'.format(n_way, k_shot))
 
 if torch.cuda.is_available():
     device = "cuda"
@@ -196,7 +196,8 @@ TestDataLoader = DataLoader(TestData, batch_size=1, shuffle=True, num_workers=0)
 criterion = nn.MSELoss()
 
 #### Define optimizers
-optimizer = torch.optim.Adam(itertools.chain(EmbeddingNetwork.parameters(), RelationNetwork.parameters()), lr=learning_rate, betas=(0.5, 0.999))
+# optimizer = torch.optim.Adam(itertools.chain(EmbeddingNetwork.parameters(), RelationNetwork.parameters()), lr=learning_rate, betas=(0.5, 0.999))
+optimizer = torch.optim.Adam(RelationNetwork.parameters(), lr=learning_rate, betas=(0.5, 0.999))
 
 
 
