@@ -156,7 +156,19 @@ class ResEncoder(nn.Module):
         h = self.final_layers(h)
         return h
 
+class TransferRelationNetwork(nn.Module):
+    def __init__(self):
+        super(TransferRelationNetwork, self).__init__()
 
+        self.fc1 = nn.Linear(1024*2, 512)
+        self.fc2 = nn.Linear(512, 128)
+        self.fc3 = nn.Linear(128, 1)
+
+    def forward(self, x):
+        h = F.relu(self.fc1(x))
+        h = F.relu(self.fc2(h))
+        h = torch.sigmoid(self.fc3(h))
+        return h
 
 
 class TextEncoder(nn.Module):

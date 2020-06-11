@@ -41,6 +41,7 @@ parser.add_argument("-ckp","--checkpoint_path",type = str)
 parser.add_argument("-ep","--epochs",type = int, default = 150)
 parser.add_argument("-train","--do_training",type = bool, default = True)
 parser.add_argument("-test","--test_class_path",type = str, default = "")
+parser.add_argument("-tsf", "--transfer_learning", type=bool, default=False)
 
 args = parser.parse_args()
 
@@ -64,9 +65,14 @@ def training(data_loader, n_epoch):
         qx_f = EmbeddingNetwork(qx)
 
         ## Concatenating support and quey set
-        sx_f = torch.sum(sx_f.view(n_way, k_shot, 64, sx_f.shape[-2], sx_f.shape[-1]), 1).squeeze(1).unsqueeze(0).repeat(qx.shape[0], 1, 1, 1, 1)
-        qx_f = qx_f.unsqueeze(1).repeat(1, n_way, 1, 1, 1)
-        pairs = torch.cat((sx_f, qx_f), 2).view(-1, 64*2, sx_f.shape[-2], sx_f.shape[-1])
+        if args.transfer_learning == False:
+            sx_f = torch.sum(sx_f.view(n_way, k_shot, 64, sx_f.shape[-2], sx_f.shape[-1]), 1).squeeze(1).unsqueeze(0).repeat(qx.shape[0], 1, 1, 1, 1)
+            qx_f = qx_f.unsqueeze(1).repeat(1, n_way, 1, 1, 1)
+            pairs = torch.cat((sx_f, qx_f), 2).view(-1, 64*2, sx_f.shape[-2], sx_f.shape[-1])
+        else:
+            sx_f = torch.sum(sx_f.view(n_way, k_shot, sx_f.shape[-1]), 1).squeeze(1).unsqueeze(0).repeat(qx.shape[0], 1, 1)
+            qx_f = qx_f.unsqueeze(1).repeat(1, n_way, 1)
+            pairs = torch.cat((sx_f, qx_f), 2).view(-1, sx_f.shape[-1]*2)
 
         ## Get relation scores
         scores = RelationNetwork(pairs).view(qx.shape[0], n_way, 1).squeeze(2)
@@ -87,7 +93,7 @@ def training(data_loader, n_epoch):
                         (n_epoch-1)*len(TrainDataLoader) + (en+1))
 
 
-        # print ("[Epoch: %d] [Iter: %d/%d] [loss: %f]" % (n_epoch, en, len(TrainDataLoader), loss.cpu().data.numpy()))
+        print ("[Epoch: %d] [Iter: %d/%d] [loss: %f]" % (n_epoch, en, len(TrainDataLoader), loss.cpu().data.numpy()))
 
 
 ### Validation Function
@@ -112,9 +118,14 @@ def validation(data_loader, n_epoch):
         qx_f = EmbeddingNetwork(qx)
 
         ## Concatenating support and quey set
-        sx_f = torch.sum(sx_f.view(n_way, k_shot, 64, sx_f.shape[-2], sx_f.shape[-1]), 1).squeeze(1).unsqueeze(0).repeat(qx.shape[0], 1, 1, 1, 1)
-        qx_f = qx_f.unsqueeze(1).repeat(1, n_way, 1, 1, 1)
-        pairs = torch.cat((sx_f, qx_f), 2).view(-1, 64*2, sx_f.shape[-2], sx_f.shape[-1])
+        if args.transfer_learning == False:
+            sx_f = torch.sum(sx_f.view(n_way, k_shot, 64, sx_f.shape[-2], sx_f.shape[-1]), 1).squeeze(1).unsqueeze(0).repeat(qx.shape[0], 1, 1, 1, 1)
+            qx_f = qx_f.unsqueeze(1).repeat(1, n_way, 1, 1, 1)
+            pairs = torch.cat((sx_f, qx_f), 2).view(-1, 64*2, sx_f.shape[-2], sx_f.shape[-1])
+        else:
+            sx_f = torch.sum(sx_f.view(n_way, k_shot, sx_f.shape[-1]), 1).squeeze(1).unsqueeze(0).repeat(qx.shape[0], 1, 1)
+            qx_f = qx_f.unsqueeze(1).repeat(1, n_way, 1)
+            pairs = torch.cat((sx_f, qx_f), 2).view(-1, sx_f.shape[-1]*2)
 
         ## Get relation scores
         scores = RelationNetwork(pairs).view(qx.shape[0], n_way, 1).squeeze(2)
@@ -144,7 +155,7 @@ if isdir(checkpoints_path)==False:
     makedirs(checkpoints_path)
 
 
-writer = SummaryWriter('runs/RelationNet_{}_way_{}_shot_ResNet'.format(n_way, k_shot))
+writer = SummaryWriter('runs/RelationNet_{}_way_{}_shot_TransferLearning'.format(n_way, k_shot))
 
 if torch.cuda.is_available():
     device = "cuda"
@@ -152,8 +163,21 @@ else:
     device = "cpu"
 
 #### Define networks
-EmbeddingNetwork = md.ResEncoder().to(device)
-RelationNetwork = md.RelationNet().to(device)
+
+if args.transfer_learning == False:
+    EmbeddingNetwork = md.ResEncoder().to(device)
+    RelationNetwork = md.RelationNet().to(device)
+else:
+    EmbeddingNetwork = models.resnet50(pretrained=True)
+
+    for param in EmbeddingNetwork.parameters():
+        param.requires_grad = False   
+        
+    EmbeddingNetwork.fc = torch.nn.Sequential(
+                torch.nn.Linear(2048, 1024))
+
+    EmbeddingNetwork = EmbeddingNetwork.to(device)
+    RelationNetwork = md.TransferRelationNetwork().to(device)
 
 #### Get training, validation, and testing classes
 tr, val, te = dl.get_labels("./data/102flowers/imagelabels.mat")
