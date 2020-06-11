@@ -25,6 +25,88 @@ class RegularEncoder(nn.Module):
     def forward(self, x):
         return self.layers(x)
 
+class inception(nn.Module):
+    
+    def __init__(self, inp, n1, n3r, n3, n5r, n5, mxp):
+        super(inception, self).__init__()
+        
+        layers = []
+        layers += [nn.Conv2d(inp, n1, 1)]
+        layers += [nn.ReLU(True)]
+        self.one = nn.Sequential(*layers)
+        
+        layers = []
+        layers += [nn.Conv2d(inp, n3r, 1)]
+        layers += [nn.ReLU(True)]
+        layers += [nn.Conv2d(n3r, n3, 3, padding=1)]
+        layers += [nn.ReLU(True)]
+        self.three = nn.Sequential(*layers)
+        
+        layers = []
+        layers += [nn.Conv2d(inp, n5r, 1)]
+        layers += [nn.ReLU(True)]
+        layers += [nn.Conv2d(n5r, n5, 3, padding=1)]
+        layers += [nn.ReLU(True)]
+        layers += [nn.Conv2d(n5, n5, 3, padding=1)]
+        layers += [nn.ReLU(True)]
+        self.five = nn.Sequential(*layers)
+        
+        layers = []
+        layers += [nn.MaxPool2d(3, 1, 1)]
+        layers += [nn.Conv2d(inp, mxp, 1)]
+        layers += [nn.ReLU(True)]
+        
+        self.maxp = nn.Sequential(*layers)
+        
+    def forward(self, x):
+        h1 = self.one(x)
+        h2 = self.three(x)
+        h3 = self.five(x)
+        h4 = self.maxp(x)
+        
+        h = torch.cat([h1, h2, h3, h4], 1)
+        
+        return h
+
+
+class InceptionEncoder(nn.Module):
+    def __init__(self, cnn_layer=1, inception_layer=3, lcnn_layer=2):
+        super(InceptionEncoder, self).__init__()
+
+        layers = []
+        in_c = 3
+        for i in range(cnn_layer):
+            layers.append(nn.Conv2d(in_c, 64,3))
+            in_c = 64
+            layers.append(nn.ReLU())
+            layers.append(nn.MaxPool2d(2))
+        self.base_layers = nn.Sequential(*layers)
+
+        layers = []
+        mp = 4
+        for i in range(inception_layer):
+            layers.append(inception(in_c, 32, 32, 64, 32, 64, mp))
+            in_c = 32+64+64+mp
+            mp=mp*2
+        self.inception_layers = nn.Sequential(*layers)
+
+        layers = []
+        out_c = in_c//2
+        for i in range(lcnn_layer):
+            layers.append(nn.Conv2d(in_c, out_c, 3))
+            in_c = in_c//2
+            if i==0:
+                out_c = 64
+                layers.append(nn.MaxPool2d(2))
+        self.final_layers = nn.Sequential(*layers)
+
+    def forward(self, x):
+        h = self.base_layers(x)
+        h = self.inception_layers(h)
+        h = self.final_layers(h)
+        return h
+
+
 class TextEncoder(nn.Module):
     def __init__(self, bert_path):
         super(TextEncoder, self).__init__()
