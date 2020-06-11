@@ -144,7 +144,7 @@ if isdir(checkpoints_path)==False:
     makedirs(checkpoints_path)
 
 
-writer = SummaryWriter('runs/RelationNet_{}_way_{}_shot_Inception'.format(n_way, k_shot))
+writer = SummaryWriter('runs/RelationNet_{}_way_{}_shot_ResNet'.format(n_way, k_shot))
 
 if torch.cuda.is_available():
     device = "cuda"
@@ -152,7 +152,7 @@ else:
     device = "cpu"
 
 #### Define networks
-EmbeddingNetwork = md.InceptionEncoder().to(device)
+EmbeddingNetwork = md.ResEncoder().to(device)
 RelationNetwork = md.RelationNet().to(device)
 
 #### Get training, validation, and testing classes

@@ -106,6 +106,58 @@ class InceptionEncoder(nn.Module):
         h = self.final_layers(h)
         return h
 
+class ResNet(nn.Module):
+    def __init__(self, in_c):
+        super(ResNet, self).__init__()
+        self.l1 = nn.Conv2d(in_c, in_c, 3, 1, 1)
+        self.l2 = nn.Conv2d(in_c, in_c, 3, 1, 1)
+
+        self.b1 = nn.BatchNorm2d(in_c)
+        self.b2 = nn.BatchNorm2d(in_c)
+
+    def forward(self, x):
+        h = F.relu(self.b1(x))
+        h = self.l1(h)
+
+        h = F.relu(self.b2(h))
+        h = self.l2(h)
+
+        return h+x
+
+class ResEncoder(nn.Module):
+    def __init__(self, cnn_layer=2, res_layer=3, lcnn_layer=2):
+        super(ResEncoder, self).__init__()
+
+        layers = []
+        in_c = 3
+        for i in range(cnn_layer):
+            layers.append(nn.Conv2d(in_c, 64,3))
+            in_c = 64
+            if i==0:
+                layers.append(nn.ReLU())
+                layers.append(nn.MaxPool2d(2))
+        self.base_layers = nn.Sequential(*layers)
+
+        layers = []
+        for i in range(res_layer):
+            layers.append(ResNet(in_c))
+        self.res_layers = nn.Sequential(*layers)
+
+        layers = []
+        for i in range(lcnn_layer):
+            layers.append(nn.Conv2d(in_c, in_c, 3))
+            if i==0:
+                layers.append(nn.MaxPool2d(2))
+        self.final_layers = nn.Sequential(*layers)
+
+    def forward(self, x):
+        h = self.base_layers(x)
+        h = self.res_layers(h)
+        h = self.final_layers(h)
+        return h
+
+
+
 
 class TextEncoder(nn.Module):
     def __init__(self, bert_path):
