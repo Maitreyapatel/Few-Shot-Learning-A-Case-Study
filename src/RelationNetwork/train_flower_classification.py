@@ -168,13 +168,13 @@ if args.transfer_learning == False:
     EmbeddingNetwork = md.ResEncoder().to(device)
     RelationNetwork = md.RelationNet().to(device)
 else:
-    EmbeddingNetwork = models.resnet50(pretrained=True)
+    EmbeddingNetwork = models.densenet161(pretrained=True)
 
     for param in EmbeddingNetwork.parameters():
         param.requires_grad = False   
         
-    EmbeddingNetwork.fc = torch.nn.Sequential(
-                torch.nn.Linear(2048, 1024))
+    EmbeddingNetwork.classifier = torch.nn.Sequential(
+                torch.nn.Linear(2208, 1024))
 
     EmbeddingNetwork = EmbeddingNetwork.to(device)
     RelationNetwork = md.TransferRelationNetwork().to(device)
