@@ -5,8 +5,8 @@ This folder contains all the experimentation and analysis related to the [Relati
 #### Tasks and Status
 |Task|Status|Blog|
 |--|--|--|
-|Implementation of flower classifier|Done|Soon available!|
-|Experiments with different architectures in above classifier|Up next| - |
+|Implementation of flower classifier|Done|[Blog](https://maitreyapatel.github.io/few_shot_part_2.html)|
+|Experiments with different architectures in above classifier|Done| [Blog](https://maitreyapatel.github.io/few_shot_part_2.html) |
 |Experiments on text classification|Ongoing| - |
 |Experiments on Speech classification|Remaining| - |
 

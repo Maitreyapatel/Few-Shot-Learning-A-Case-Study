@@ -6,6 +6,14 @@ import torch.nn.functional as F
 
 import transformers
 
+class PrintLayer(nn.Module):
+    def __init__(self):
+        super(PrintLayer, self).__init__()
+    
+    def forward(self, x):
+        print(self.i, x.shape)
+        return x
+
 class RegularEncoder(nn.Module):
     def __init__(self, n_layer=4, batch_norm = [1, 1, 1, 1], mp = [1, 1, 0, 0]):
         super(RegularEncoder, self).__init__()
@@ -185,7 +193,6 @@ class TextEncoder(nn.Module):
         cat = torch.cat((apool, mpool), 1)
 
         return cat
-
 
 class RelationNet(nn.Module):
     def __init__(self, cnn_layers=2, batch_norm = [1, 1], mp=[1,1], hidden_dim = 512):
