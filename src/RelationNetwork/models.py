@@ -194,6 +194,26 @@ class TextEncoder(nn.Module):
 
         return cat
 
+class TextLSTMEncoder(nn.Module):
+    def __init__(self, bert_path):
+        super(TextLSTMEncoder, self).__init__()
+        self.bert_path = bert_path
+        self.bert = transformers.BertModel.from_pretrained('bert-base-uncased').eval()
+        self.LSTM = nn.LSTM(768, 1024, batch_first=True, bidirectional=True, num_layers=2)
+        self.fc1 = nn.Linear(1024*2, 1024)
+        self.fc2 = nn.Linear(1024, 768)
+
+    def forward(self, ids, mask,  token_type_ids):
+        with torch.no_grad():
+            o1, o2 = self.bert(ids, attention_mask=mask, token_type_ids=token_type_ids)
+
+        out, _ = self.LSTM(o1)
+        h = F.relu(self.fc1(torch.sum(out, 1).squeeze(1)))
+        h = self.fc2(h)
+
+        return h
+
+
 class RelationNet(nn.Module):
     def __init__(self, cnn_layers=2, batch_norm = [1, 1], mp=[1,1], hidden_dim = 512):
         super(RelationNet, self).__init__()
@@ -226,6 +246,21 @@ class TextRelationNetwork(nn.Module):
         super(TextRelationNetwork, self).__init__()
 
         self.fc1 = nn.Linear(768*2*2, 768)
+        self.fc2 = nn.Linear(768, 128)
+        self.fc3 = nn.Linear(128, 1)
+
+    def forward(self, x):
+        h = F.relu(self.fc1(x))
+        h = F.relu(self.fc2(h))
+        h = torch.sigmoid(self.fc3(h))
+        return h
+
+
+class TextLSTMRelationNetwork(nn.Module):
+    def __init__(self):
+        super(TextLSTMRelationNetwork, self).__init__()
+
+        self.fc1 = nn.Linear(768*2, 768)
         self.fc2 = nn.Linear(768, 128)
         self.fc3 = nn.Linear(128, 1)
 

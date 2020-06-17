@@ -71,7 +71,7 @@ def training(data_loader, n_epoch):
             Variable(qx['mask'].squeeze(0)).to(device),
             Variable(qx['token_type_ids'].squeeze(0)).to(device)
         )
-
+        
         ## Concatenating support and quey set
         sx_f = torch.sum(sx_f.view(n_way, k_shot, sx_f.shape[-1]), 1).squeeze(1).unsqueeze(0).repeat(qx['ids'].squeeze(0).shape[0], 1, 1)
         qx_f = qx_f.unsqueeze(1).repeat(1, n_way, 1)
@@ -160,7 +160,7 @@ if isdir(checkpoints_path)==False:
     makedirs(checkpoints_path)
 
 
-writer = SummaryWriter('runs/TEXT_RelationNet_{}_way_{}_shot_exp3'.format(n_way, k_shot))
+writer = SummaryWriter('runs/TEXT_RelationNet_{}_way_{}_shot_exp5_LSTM_2'.format(n_way, k_shot))
 
 if torch.cuda.is_available():
     device = "cuda"
@@ -168,8 +168,8 @@ else:
     device = "cpu"
 
 #### Define networks
-EmbeddingNetwork = md.TextEncoder("./data").to(device)
-RelationNetwork = md.TextRelationNetwork().to(device)
+EmbeddingNetwork = md.TextLSTMEncoder("./data").to(device)
+RelationNetwork = md.TextLSTMRelationNetwork().to(device)
 
 #### Get training, validation, and testing classes
 tr, val, te = dl.get_text_labels("./data/news/news_v2.json")
@@ -196,8 +196,8 @@ TestDataLoader = DataLoader(TestData, batch_size=1, shuffle=True, num_workers=0)
 criterion = nn.MSELoss()
 
 #### Define optimizers
-# optimizer = torch.optim.Adam(itertools.chain(EmbeddingNetwork.parameters(), RelationNetwork.parameters()), lr=learning_rate, betas=(0.5, 0.999))
-optimizer = torch.optim.Adam(RelationNetwork.parameters(), lr=learning_rate, betas=(0.5, 0.999))
+optimizer = torch.optim.Adam(itertools.chain(EmbeddingNetwork.parameters(), RelationNetwork.parameters()), lr=learning_rate, betas=(0.5, 0.999))
+# optimizer = torch.optim.Adam(RelationNetwork.parameters(), lr=learning_rate, betas=(0.5, 0.999))
 
 
 
