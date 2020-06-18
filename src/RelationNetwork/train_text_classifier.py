@@ -160,7 +160,7 @@ if isdir(checkpoints_path)==False:
     makedirs(checkpoints_path)
 
 
-writer = SummaryWriter('runs/TEXT_RelationNet_{}_way_{}_shot_exp5_LSTM_2'.format(n_way, k_shot))
+writer = SummaryWriter('runs/TEXT_RelationNet_{}_way_{}_shot_exp6_GRU'.format(n_way, k_shot))
 
 if torch.cuda.is_available():
     device = "cuda"
@@ -168,7 +168,7 @@ else:
     device = "cpu"
 
 #### Define networks
-EmbeddingNetwork = md.TextLSTMEncoder("./data").to(device)
+EmbeddingNetwork = md.TextGRUEncoder("./data").to(device)
 RelationNetwork = md.TextLSTMRelationNetwork().to(device)
 
 #### Get training, validation, and testing classes

@@ -24,3 +24,4 @@ Below table shows the results of different experiments on few shot text classifi
 |(2)|BERT| avg. pool | ~29% |
 |(3)|BERT| BERT + avg. pool + max pool | ~31% |
 |(4)|BERT| BiLSTM + 2 linear layers | ~36% |
+|(5)|BERT| BiGRU + 2 linear layers | ~38% |
