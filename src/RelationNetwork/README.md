@@ -18,9 +18,9 @@ Below figure shows the results of RelationNetwork on flower classification with 
 ##### Results on news classification
 Below table shows the results of different experiments on few shot text classification on news categories. Below experiments evaluates a BERT based embeddings at very initial level.
 
-| Index | Word Embeddings | Embedding Network Specification | Accuracy | # of trainabe parameter |
+| Index | Word Embeddings | Embedding Network Specification | Accuracy | # of trainable parameter |
 |--|--|--|--|--|
-|(1)|BERT| avg. pool + max pool | ~20% | ~2.5M |
-|(2)|BERT| BERT + avg. pool + max pool | ~31% | ~88M |
-|(3)|BERT| BiLSTM + 2 linear layers | ~36% | ~41.5M |
-|(4)|BERT| BiGRU + 2 linear layers | ~38% | ~12.8M |
+|(1)|BERT| avg. pool + max pool | ~20% | ~2.5 M |
+|(2)|BERT| BERT + avg. pool + max pool | ~31% | ~88 M |
+|(3)|BERT| BiLSTM + 2 linear layers | ~36% | ~41.5 M |
+|(4)|BERT| BiGRU + 2 linear layers | ~38% | ~12.8 M |
